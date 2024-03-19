@@ -19,10 +19,6 @@ func crawlerHandler(w http.ResponseWriter, r *http.Request) {
 	crawler.StartCrawl()
 }
 
-func enableCors(w *http.ResponseWriter) {
-	(*w).Header().Set("Access-Control-Allow-Origin", "*")
-}
-
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -32,17 +28,29 @@ func main() {
 	database.InitDB()
 	defer database.CloseDB()
 
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+	// Create a GraphQL server
+	gqlHandler := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
+		Resolvers: &graph.Resolver{},
+	}))
+
+	// Define CORS options to allow all origins
+	cors := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"}, // Allow all origins
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+		Debug:            true,
+	})
+
+	handler := cors.Handler(gqlHandler)
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	http.Handle("/query", handler)
 	http.HandleFunc("/crawl", crawlerHandler)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 
-	handler := cors.Default().Handler(srv)
-
-	err := http.ListenAndServe(":"+port, handler)
+	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
