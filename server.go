@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -15,11 +14,10 @@ import (
 
 const defaultPort = "8080"
 
-
 func crawlerHandler(w http.ResponseWriter, r *http.Request) {
-	test := crawler.StartCrawl()
-	fmt.Fprintf(w, test)
-} 
+	crawler.StartCrawl()
+
+}
 
 func main() {
 	port := os.Getenv("PORT")

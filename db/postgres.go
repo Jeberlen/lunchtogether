@@ -11,14 +11,14 @@ var Db *sql.DB
 
 func InitDB() {
 
-	connStr := "postgres://postgres:postgres@localhost/lunchtogetherdev?sslmode=disable"
+	connStr := "postgres://postgres:postgres@172.17.0.2/lunchtogetherdev?sslmode=disable"
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Panic(err)
 	}
 
 	if err = db.Ping(); err != nil {
- 		log.Panic(err)
+		log.Panic(err)
 	}
 	Db = db
 }
@@ -26,4 +26,3 @@ func InitDB() {
 func CloseDB() error {
 	return Db.Close()
 }
-
