@@ -10,13 +10,17 @@ import (
 	"github.com/Jeberlen/lunchtogether/crawler"
 	database "github.com/Jeberlen/lunchtogether/db"
 	"github.com/Jeberlen/lunchtogether/graph"
+	"github.com/rs/cors"
 )
 
 const defaultPort = "8080"
 
 func crawlerHandler(w http.ResponseWriter, r *http.Request) {
 	crawler.StartCrawl()
+}
 
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 }
 
 func main() {
@@ -35,5 +39,11 @@ func main() {
 	http.HandleFunc("/crawl", crawlerHandler)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+
+	handler := cors.Default().Handler(srv)
+
+	err := http.ListenAndServe(":"+port, handler)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
