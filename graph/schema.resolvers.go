@@ -30,6 +30,7 @@ func (r *mutationResolver) CreateRestaurant(ctx context.Context, input model.New
 		menu_item.Name = item.Name
 		menu_item.Description = item.Description
 		menu_item.URL = item.URL
+		menu_item.DayOfWeek = item.DayOfWeek
 
 		menu_itemID := menu_item.Save()
 
@@ -53,6 +54,7 @@ func (r *mutationResolver) CreateMenuItem(ctx context.Context, input model.NewMe
 	menu_item.Name = input.Name
 	menu_item.Description = input.Description
 	menu_item.URL = input.URL
+	menu_item.DayOfWeek = input.DayOfWeek
 	menu_itemID := menu_item.Save()
 
 	return &model.MenuItem{
@@ -61,6 +63,7 @@ func (r *mutationResolver) CreateMenuItem(ctx context.Context, input model.NewMe
 		Name:        menu_item.Name,
 		Description: menu_item.Description,
 		URL:         menu_item.URL,
+		DayOfWeek:   menu_item.DayOfWeek,
 	}, nil
 }
 
@@ -78,7 +81,8 @@ func (r *queryResolver) Restaurants(ctx context.Context) ([]*model.Restaurant, e
 				Type:        menu.Type,
 				Name:        menu.Name,
 				Description: menu.Description,
-				URL:         menu.URL}
+				URL:         menu.URL,
+				DayOfWeek:   menu.DayOfWeek}
 			menu_map = append(menu_map, item)
 		}
 
@@ -106,7 +110,8 @@ func (r *queryResolver) RestaurantsByDate(ctx context.Context, date string) ([]*
 				Type:        menu.Type,
 				Name:        menu.Name,
 				Description: menu.Description,
-				URL:         menu.URL}
+				URL:         menu.URL,
+				DayOfWeek:   menu.DayOfWeek}
 			menu_map = append(menu_map, item)
 		}
 

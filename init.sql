@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS restaurant (
 
 CREATE TABLE IF NOT EXISTS menu_item (
     id SERIAL PRIMARY KEY,
+    dayOfWeek TEXT NOT NULL,
     type TEXT NOT NULL,
     name TEXT NOT NULL,
     description TEXT NOT NULL,

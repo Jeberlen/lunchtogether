@@ -48,6 +48,7 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	MenuItem struct {
+		DayOfWeek   func(childComplexity int) int
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Name        func(childComplexity int) int
@@ -100,6 +101,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "MenuItem.dayOfWeek":
+		if e.complexity.MenuItem.DayOfWeek == nil {
+			break
+		}
+
+		return e.complexity.MenuItem.DayOfWeek(childComplexity), true
 
 	case "MenuItem.description":
 		if e.complexity.MenuItem.Description == nil {
@@ -651,6 +659,50 @@ func (ec *executionContext) fieldContext_MenuItem_url(ctx context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _MenuItem_dayOfWeek(ctx context.Context, field graphql.CollectedField, obj *model.MenuItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MenuItem_dayOfWeek(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DayOfWeek, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MenuItem_dayOfWeek(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MenuItem",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createRestaurant(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_createRestaurant(ctx, field)
 	if err != nil {
@@ -765,6 +817,8 @@ func (ec *executionContext) fieldContext_Mutation_createMenuItem(ctx context.Con
 				return ec.fieldContext_MenuItem_description(ctx, field)
 			case "url":
 				return ec.fieldContext_MenuItem_url(ctx, field)
+			case "dayOfWeek":
+				return ec.fieldContext_MenuItem_dayOfWeek(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type MenuItem", field.Name)
 		},
@@ -1212,6 +1266,8 @@ func (ec *executionContext) fieldContext_Restaurant_menu(ctx context.Context, fi
 				return ec.fieldContext_MenuItem_description(ctx, field)
 			case "url":
 				return ec.fieldContext_MenuItem_url(ctx, field)
+			case "dayOfWeek":
+				return ec.fieldContext_MenuItem_dayOfWeek(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type MenuItem", field.Name)
 		},
@@ -2999,7 +3055,7 @@ func (ec *executionContext) unmarshalInputNewMenuItem(ctx context.Context, obj i
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"type", "name", "description", "url"}
+	fieldsInOrder := [...]string{"type", "name", "description", "url", "dayOfWeek"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3034,6 +3090,13 @@ func (ec *executionContext) unmarshalInputNewMenuItem(ctx context.Context, obj i
 				return it, err
 			}
 			it.URL = data
+		case "dayOfWeek":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dayOfWeek"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DayOfWeek = data
 		}
 	}
 
@@ -3122,6 +3185,11 @@ func (ec *executionContext) _MenuItem(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "url":
 			out.Values[i] = ec._MenuItem_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "dayOfWeek":
+			out.Values[i] = ec._MenuItem_dayOfWeek(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

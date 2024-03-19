@@ -8,6 +8,7 @@ type MenuItem {
   name: String!
   description: String!
   url: String!
+  dayOfWeek: String!
 }
 
 type Restaurant {
@@ -33,6 +34,7 @@ input NewMenuItem {
   name: String!
   description: String!
   url: String!
+  dayOfWeek: String!
 }
 
 type Mutation {

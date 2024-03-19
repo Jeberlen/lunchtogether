@@ -61,7 +61,7 @@ func GetAll() []Restaurant {
 			var menuItemId string
 			rowsOfMEnuItemIds.Scan(&menuItemId)
 
-			query := fmt.Sprintf("select id, type, name, description, url from menu_item where id=%s", menuItemId)
+			query := fmt.Sprintf("select id, type, name, description, url, dayOfWeek from menu_item where id=%s", menuItemId)
 			stmt, err := database.Db.Prepare(query)
 			if err != nil {
 				log.Fatal(err)
@@ -81,7 +81,8 @@ func GetAll() []Restaurant {
 					&menu_item.Type,
 					&menu_item.Name,
 					&menu_item.Description,
-					&menu_item.URL)
+					&menu_item.URL,
+					&menu_item.DayOfWeek)
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -134,7 +135,7 @@ func GetResturantByDate(date string) []Restaurant {
 			var menuItemId string
 			rowsOfMEnuItemIds.Scan(&menuItemId)
 
-			query := fmt.Sprintf("select id, type, name, description, url from menu_item where id=%s", menuItemId)
+			query := fmt.Sprintf("select id, type, name, description, url, dayOfWeek from menu_item where id=%s", menuItemId)
 			stmt, err := database.Db.Prepare(query)
 			if err != nil {
 				log.Fatal(err)
@@ -154,7 +155,8 @@ func GetResturantByDate(date string) []Restaurant {
 					&menu_item.Type,
 					&menu_item.Name,
 					&menu_item.Description,
-					&menu_item.URL)
+					&menu_item.URL,
+					&menu_item.DayOfWeek)
 				if err != nil {
 					log.Fatal(err)
 				}
