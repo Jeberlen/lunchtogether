@@ -8,16 +8,22 @@ import (
 	"github.com/gocolly/colly"
 )
 
+var collector *colly.Collector
+
+func InitSpider() {
+	collector = colly.NewCollector()
+}
+
 func StartCrawl() {
 
-	collector := colly.NewCollector()
-	collector.Visit("https://volvo-cars.nordrest.se/hojden/")
+	InitSpider()
 
 	collector.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting: ", r.URL)
+		log.Print("Visiting: ", r.URL)
 	})
 
 	collector.OnHTML(".menu-col", func(e *colly.HTMLElement) {
+		log.Print(e)
 		var restaurantList []restaurants.Restaurant
 		restaurant := restaurants.Restaurant{}
 
@@ -42,5 +48,11 @@ func StartCrawl() {
 	collector.OnScraped(func(r *colly.Response) {
 		fmt.Println(r.Request.URL, " scraped!")
 	})
+
+	log.Print("Sending spider to https://volvo-cars.nordrest.se/hojden/")
+	err := collector.Visit("https://volvo-cars.nordrest.se/hojden/")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 }
