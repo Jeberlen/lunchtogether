@@ -1,0 +1,4 @@
+ALTER TABLE
+    restaurant
+ALTER COLUMN
+    date TYPE VARCHAR;

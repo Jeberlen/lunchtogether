@@ -94,7 +94,8 @@ func (r *queryResolver) RestaurantsByDate(ctx context.Context, date string) ([]*
 	_, dateAsWeek := dateObject.ISOWeek()
 
 	var results []*model.Restaurant
-	var dbRestaurant = restaurant.GetResturantByDate(strconv.Itoa(dateAsWeek))
+	dateString := strconv.Itoa(dateAsWeek + 1)
+	var dbRestaurant = restaurant.GetResturantByDate(dateString)
 
 	for _, restaurant := range dbRestaurant {
 

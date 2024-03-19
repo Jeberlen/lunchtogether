@@ -9,16 +9,16 @@ import (
 )
 
 type Restaurant struct {
-	ID		string
-	Name    string
-  	Date    string
-  	Menu	[]*menu_items.MenuItem
+	ID   string
+	Name string
+	Date string
+	Menu []*menu_items.MenuItem
 }
 
 func (restaurant Restaurant) Save() int64 {
 	var id int64
-	query := fmt.Sprintf("INSERT INTO restaurant(name,date) VALUES('%s','%s') RETURNING id", 
-		restaurant.Name, 
+	query := fmt.Sprintf("INSERT INTO restaurant(name,date) VALUES('%s','%s') RETURNING id",
+		restaurant.Name,
 		restaurant.Date)
 
 	err := database.Db.QueryRow(query).Scan(&id)
@@ -38,54 +38,64 @@ func GetAll() []Restaurant {
 	}
 	defer stmt.Close()
 
-	rows, err := stmt.Query()
+	restaurantRows, err := stmt.Query()
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer rows.Close()
+	defer restaurantRows.Close()
 
 	var restaurants []Restaurant
-	for rows.Next() {
+	for restaurantRows.Next() {
 		var restaurant Restaurant
-		err := rows.Scan(&restaurant.ID, &restaurant.Name, &restaurant.Date)
-		if err != nil{
-			log.Fatal(err)
-		}
-
-		query := fmt.Sprintf("select id, type, name, description, url from menu_item where id=%s", restaurant.ID)
-		stmt, err := database.Db.Prepare(query)
+		err := restaurantRows.Scan(&restaurant.ID, &restaurant.Name, &restaurant.Date)
 		if err != nil {
 			log.Fatal(err)
 		}
-		defer stmt.Close()
 
-		rows, err := stmt.Query()
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer rows.Close()
+		rowsOfMEnuItemIds, _ := database.Db.Query(
+			fmt.Sprintf("select menu_item_id from restaurant_menu where restaurant_id = %s", restaurant.ID),
+		)
 
 		var menu []*menu_items.MenuItem
-		for rows.Next() {
-			var menu_item menu_items.MenuItem
-			err := rows.Scan(
-				&menu_item.ID, 
-				&menu_item.Type, 
-				&menu_item.Name, 
-				&menu_item.Description, 
-				&menu_item.URL)
-			if err != nil{
+		for rowsOfMEnuItemIds.Next() {
+			var menuItemId string
+			rowsOfMEnuItemIds.Scan(&menuItemId)
+
+			query := fmt.Sprintf("select id, type, name, description, url from menu_item where id=%s", menuItemId)
+			stmt, err := database.Db.Prepare(query)
+			if err != nil {
 				log.Fatal(err)
 			}
-			menu = append(menu, &menu_item)
+			defer stmt.Close()
+
+			menuItemRows, err := stmt.Query()
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer menuItemRows.Close()
+
+			for menuItemRows.Next() {
+				var menu_item menu_items.MenuItem
+				err := menuItemRows.Scan(
+					&menu_item.ID,
+					&menu_item.Type,
+					&menu_item.Name,
+					&menu_item.Description,
+					&menu_item.URL)
+				if err != nil {
+					log.Fatal(err)
+				}
+				menu = append(menu, &menu_item)
+			}
+
+			restaurant.Menu = menu
+
 		}
-
-		restaurant.Menu = menu
-
 		restaurants = append(restaurants, restaurant)
+
 	}
 
-	if err = rows.Err(); err != nil {
+	if err = restaurantRows.Err(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -93,60 +103,72 @@ func GetAll() []Restaurant {
 }
 
 func GetResturantByDate(date string) []Restaurant {
-	stmt, err := database.Db.Prepare("select id, name, date from restaurant")
+	stmt, err := database.Db.Prepare(
+		fmt.Sprintf("select id, name, date from restaurant where date = '%s'", date),
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer stmt.Close()
 
-	rows, err := stmt.Query()
+	restaurantRows, err := stmt.Query()
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer rows.Close()
+	defer restaurantRows.Close()
 
 	var restaurants []Restaurant
-	for rows.Next() {
+	for restaurantRows.Next() {
 		var restaurant Restaurant
-		err := rows.Scan(&restaurant.ID, &restaurant.Name, &restaurant.Date)
-		if err != nil{
-			log.Fatal(err)
-		}
-
-		query := fmt.Sprintf("select id, type, name, description, url from menu_item where id=%s", restaurant.ID)
-		stmt, err := database.Db.Prepare(query)
+		err := restaurantRows.Scan(&restaurant.ID, &restaurant.Name, &restaurant.Date)
 		if err != nil {
 			log.Fatal(err)
 		}
-		defer stmt.Close()
 
-		rows, err := stmt.Query()
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer rows.Close()
+		rowsOfMEnuItemIds, _ := database.Db.Query(
+			fmt.Sprintf("select menu_item_id from restaurant_menu where restaurant_id = %s", restaurant.ID),
+		)
 
 		var menu []*menu_items.MenuItem
-		for rows.Next() {
-			var menu_item menu_items.MenuItem
-			err := rows.Scan(
-				&menu_item.ID, 
-				&menu_item.Type, 
-				&menu_item.Name, 
-				&menu_item.Description, 
-				&menu_item.URL)
-			if err != nil{
+		for rowsOfMEnuItemIds.Next() {
+			var menuItemId string
+			rowsOfMEnuItemIds.Scan(&menuItemId)
+
+			query := fmt.Sprintf("select id, type, name, description, url from menu_item where id=%s", menuItemId)
+			stmt, err := database.Db.Prepare(query)
+			if err != nil {
 				log.Fatal(err)
 			}
-			menu = append(menu, &menu_item)
+			defer stmt.Close()
+
+			menuItemRows, err := stmt.Query()
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer menuItemRows.Close()
+
+			for menuItemRows.Next() {
+				var menu_item menu_items.MenuItem
+				err := menuItemRows.Scan(
+					&menu_item.ID,
+					&menu_item.Type,
+					&menu_item.Name,
+					&menu_item.Description,
+					&menu_item.URL)
+				if err != nil {
+					log.Fatal(err)
+				}
+				menu = append(menu, &menu_item)
+			}
+
+			restaurant.Menu = menu
+
 		}
-
-		restaurant.Menu = menu
-
 		restaurants = append(restaurants, restaurant)
+
 	}
 
-	if err = rows.Err(); err != nil {
+	if err = restaurantRows.Err(); err != nil {
 		log.Fatal(err)
 	}
 
