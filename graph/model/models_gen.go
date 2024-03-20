@@ -3,23 +3,25 @@
 package model
 
 type MenuItem struct {
-	ID          string `json:"id"`
-	Type        string `json:"type"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	URL         string `json:"url"`
-	DayOfWeek   string `json:"dayOfWeek"`
+	ID          string      `json:"id"`
+	Type        string      `json:"type"`
+	Name        string      `json:"name"`
+	Description string      `json:"description"`
+	URL         string      `json:"url"`
+	DayOfWeek   string      `json:"dayOfWeek"`
+	Restaurant  *Restaurant `json:"restaurant,omitempty"`
 }
 
 type Mutation struct {
 }
 
 type NewMenuItem struct {
-	Type        string `json:"type"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	URL         string `json:"url"`
-	DayOfWeek   string `json:"dayOfWeek"`
+	Type        string         `json:"type"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	URL         string         `json:"url"`
+	DayOfWeek   string         `json:"dayOfWeek"`
+	Restaurant  *NewRestaurant `json:"restaurant,omitempty"`
 }
 
 type NewRestaurant struct {
@@ -35,5 +37,10 @@ type Restaurant struct {
 	ID   string      `json:"id"`
 	Name string      `json:"name"`
 	Date string      `json:"date"`
+	Menu []*MenuItem `json:"menu"`
+}
+
+type TypedMenuItem struct {
+	Type string      `json:"type"`
 	Menu []*MenuItem `json:"menu"`
 }

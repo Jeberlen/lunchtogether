@@ -3,6 +3,7 @@ package menu_items
 import (
 	"fmt"
 	"log"
+	"time"
 
 	database "github.com/Jeberlen/lunchtogether/db"
 )
@@ -33,4 +34,47 @@ func (menu_item MenuItem) Save() int64 {
 	log.Print("Row inserted.")
 
 	return id
+}
+
+func GetMenuByDate(date string) []MenuItem {
+
+	dateAsObject, err := time.Parse("2006-Jan-02", date)
+	if err != nil {
+		log.Fatal(err)
+	}
+	dayOfWeek := int(dateAsObject.Weekday())
+
+	stmt, err := database.Db.Prepare(
+		fmt.Sprintf("select id, name, description, type, dayOfWeek, url from menu_item where dayOfWeek = '%d'", dayOfWeek),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer stmt.Close()
+
+	menuItemRows, err := stmt.Query()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer menuItemRows.Close()
+
+	var menuItems []MenuItem
+	for menuItemRows.Next() {
+		var menuItem MenuItem
+		err := menuItemRows.Scan(
+			&menuItem.ID,
+			&menuItem.Name,
+			&menuItem.Description,
+			&menuItem.Type,
+			&menuItem.DayOfWeek,
+			&menuItem.URL,
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		menuItems = append(menuItems, menuItem)
+	}
+
+	return menuItems
 }

@@ -104,7 +104,7 @@ func StartCrawl() {
 
 		menuItems = append(menuItems, uniqueSalads...)
 		var dailyFood []menu_items.MenuItem
-		meatTypes := []string{"pork", "beef", "chicken", "ham", "pannbiff"}
+		meatTypes := []string{"pork", "beef", "chicken", "ham", "pannbiff", "bacon"}
 		fishTypes := []string{"fish", "shrimp"}
 
 		h.ForEach(".avia-section", func(i int, h *colly.HTMLElement) {
@@ -215,14 +215,6 @@ func StartCrawl() {
 		}
 
 		restaurant.Menu = ptrMenuItems
-
-		for _, test := range restaurant.Menu {
-			log.Print(test.Name)
-			log.Print(test.Description)
-			log.Print(test.Type)
-			log.Print(test.DayOfWeek)
-			log.Print(test.URL)
-		}
 		restaurant.SaveCompleteRestaurant()
 
 	})
