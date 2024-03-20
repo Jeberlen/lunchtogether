@@ -9,7 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	database "github.com/Jeberlen/lunchtogether/db"
 	"github.com/Jeberlen/lunchtogether/graph"
-	crawler "github.com/Jeberlen/lunchtogether/hojdencrawler"
+	hiveCrawler "github.com/Jeberlen/lunchtogether/hive_crawler"
+	hojdenCrawler "github.com/Jeberlen/lunchtogether/hojden_crawler"
 	"github.com/rs/cors"
 )
 
@@ -25,7 +26,8 @@ func main() {
 	defer database.CloseDB()
 
 	log.Print("starting to crawl")
-	crawler.StartCrawl()
+	hojdenCrawler.StartCrawl()
+	hiveCrawler.StartCrawl()
 	log.Print("ending crawl")
 
 	// Create a GraphQL server
@@ -53,4 +55,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 }

@@ -9,6 +9,7 @@ type MenuItem {
   description: String!
   url: String!
   dayOfWeek: String!
+  restaurant: Restaurant
 }
 
 type Restaurant {
@@ -21,6 +22,9 @@ type Restaurant {
 type Query {
   restaurants: [Restaurant!]!
   restaurantsByDate(date: String!): [Restaurant!]!
+  restaurantsByDateAndDayOfWeek(date: String!): [Restaurant!]!
+  menuByDate(date: String!): [MenuItem!]!
+  menuItemsByType(type: String!): [MenuItem!]!
 }
 
 input NewRestaurant {

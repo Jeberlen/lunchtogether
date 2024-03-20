@@ -12,22 +12,6 @@ import (
 
 var collector *colly.Collector
 
-type Weekday int
-
-const (
-	Sunday    Weekday = iota // EnumIndex = 1
-	Monday                   // EnumIndex = 2
-	Tuesday                  // EnumIndex = 3
-	Wednesday                // EnumIndex = 4
-	Thursday                 // EnumIndex = 5
-	Friday                   // EnumIndex = 6
-	Saturday                 // EnumIndex = 7
-)
-
-func (w Weekday) EnumIndex() int {
-	return int(w)
-}
-
 func keepEveryThird(list []menu_items.MenuItem) []menu_items.MenuItem {
 	var result []menu_items.MenuItem
 	for i := 0; i < len(list); i += 3 {
@@ -128,7 +112,6 @@ func StartCrawl() {
 		menuItems = keepEveryThird(menuItems)
 		var ptrMenuItems []*menu_items.MenuItem
 		for i := range menuItems {
-			// Create a new pointer for each menu item and append it to ptrMenuItems
 			menuItemPointer := &menuItems[i]
 			ptrMenuItems = append(ptrMenuItems, menuItemPointer)
 		}
