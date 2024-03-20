@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"log"
 	"strconv"
 	"time"
 
@@ -85,6 +86,7 @@ func (r *queryResolver) Restaurants(ctx context.Context) ([]*model.Restaurant, e
 				DayOfWeek:   menu.DayOfWeek}
 			menu_map = append(menu_map, item)
 		}
+		log.Print(restaurant.Name)
 
 		results = append(results, &model.Restaurant{ID: restaurant.ID, Name: restaurant.Name, Date: restaurant.Date, Menu: menu_map})
 	}
@@ -97,8 +99,10 @@ func (r *queryResolver) RestaurantsByDate(ctx context.Context, date string) ([]*
 	var dateObject, _ = time.Parse(shortForm, date)
 	_, dateAsWeek := dateObject.ISOWeek()
 
+	log.Print("date as week: " + strconv.Itoa(dateAsWeek))
+
 	var results []*model.Restaurant
-	dateString := strconv.Itoa(dateAsWeek + 1)
+	dateString := strconv.Itoa(dateAsWeek)
 	var dbRestaurant = restaurant.GetResturantByDate(dateString)
 
 	for _, restaurant := range dbRestaurant {

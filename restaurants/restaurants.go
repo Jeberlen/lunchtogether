@@ -15,6 +15,57 @@ type Restaurant struct {
 	Menu []*menu_items.MenuItem
 }
 
+func (restaurant Restaurant) SaveCompleteRestaurant() {
+	//var id int64
+
+	checkIfExistQuery := fmt.Sprintf("SELECT COUNT(*) FROM restaurant WHERE name='%s' AND date='%s'",
+		restaurant.Name,
+		restaurant.Date)
+
+	rows, err := database.Db.Query(checkIfExistQuery)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var numberOfElements string
+	for rows.Next() {
+		err := rows.Scan(&numberOfElements)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	if numberOfElements == "0" {
+		query := fmt.Sprintf("INSERT INTO restaurant(name,date) VALUES('%s','%s') RETURNING id",
+			restaurant.Name,
+			restaurant.Date)
+
+		var restaurantId int64
+		err := database.Db.QueryRow(query).Scan(&restaurantId)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var menuIds []int64
+		for _, item := range restaurant.Menu {
+			menuId := item.Save()
+			menuIds = append(menuIds, menuId)
+		}
+
+		for _, menuId := range menuIds {
+			query := fmt.Sprintf("INSERT INTO restaurant_menu(restaurant_id,menu_item_id) VALUES(%d,%d)",
+				restaurantId,
+				menuId)
+
+			database.Db.QueryRow(query)
+		}
+		log.Print("Complete restaurant inserted")
+	}
+
+	log.Print("Restaurant for date already present")
+}
+
 func (restaurant Restaurant) Save() int64 {
 	var id int64
 	query := fmt.Sprintf("INSERT INTO restaurant(name,date) VALUES('%s','%s') RETURNING id",
@@ -52,14 +103,14 @@ func GetAll() []Restaurant {
 			log.Fatal(err)
 		}
 
-		rowsOfMEnuItemIds, _ := database.Db.Query(
+		rowsOfMenuItemIds, _ := database.Db.Query(
 			fmt.Sprintf("select menu_item_id from restaurant_menu where restaurant_id = %s", restaurant.ID),
 		)
 
 		var menu []*menu_items.MenuItem
-		for rowsOfMEnuItemIds.Next() {
+		for rowsOfMenuItemIds.Next() {
 			var menuItemId string
-			rowsOfMEnuItemIds.Scan(&menuItemId)
+			rowsOfMenuItemIds.Scan(&menuItemId)
 
 			query := fmt.Sprintf("select id, type, name, description, url, dayOfWeek from menu_item where id=%s", menuItemId)
 			stmt, err := database.Db.Prepare(query)
