@@ -52,6 +52,7 @@ type ComplexityRoot struct {
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Name        func(childComplexity int) int
+		Restaurant  func(childComplexity int) int
 		Type        func(childComplexity int) int
 		URL         func(childComplexity int) int
 	}
@@ -62,8 +63,11 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Restaurants       func(childComplexity int) int
-		RestaurantsByDate func(childComplexity int, date string) int
+		MenuItemsByType               func(childComplexity int, typeArg string) int
+		Restaurants                   func(childComplexity int) int
+		RestaurantsByDate             func(childComplexity int, date string) int
+		RestaurantsByDateAndDayOfWeek func(childComplexity int, date string) int
+		TypedMenuByDate               func(childComplexity int, date string) int
 	}
 
 	Restaurant struct {
@@ -71,6 +75,11 @@ type ComplexityRoot struct {
 		ID   func(childComplexity int) int
 		Menu func(childComplexity int) int
 		Name func(childComplexity int) int
+	}
+
+	TypedMenuItem struct {
+		Menu func(childComplexity int) int
+		Type func(childComplexity int) int
 	}
 }
 
@@ -81,6 +90,9 @@ type MutationResolver interface {
 type QueryResolver interface {
 	Restaurants(ctx context.Context) ([]*model.Restaurant, error)
 	RestaurantsByDate(ctx context.Context, date string) ([]*model.Restaurant, error)
+	RestaurantsByDateAndDayOfWeek(ctx context.Context, date string) ([]*model.Restaurant, error)
+	TypedMenuByDate(ctx context.Context, date string) ([]*model.TypedMenuItem, error)
+	MenuItemsByType(ctx context.Context, typeArg string) ([]*model.MenuItem, error)
 }
 
 type executableSchema struct {
@@ -130,6 +142,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.MenuItem.Name(childComplexity), true
 
+	case "MenuItem.restaurant":
+		if e.complexity.MenuItem.Restaurant == nil {
+			break
+		}
+
+		return e.complexity.MenuItem.Restaurant(childComplexity), true
+
 	case "MenuItem.type":
 		if e.complexity.MenuItem.Type == nil {
 			break
@@ -168,6 +187,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateRestaurant(childComplexity, args["input"].(model.NewRestaurant)), true
 
+	case "Query.menuItemsByType":
+		if e.complexity.Query.MenuItemsByType == nil {
+			break
+		}
+
+		args, err := ec.field_Query_menuItemsByType_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.MenuItemsByType(childComplexity, args["type"].(string)), true
+
 	case "Query.restaurants":
 		if e.complexity.Query.Restaurants == nil {
 			break
@@ -186,6 +217,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.RestaurantsByDate(childComplexity, args["date"].(string)), true
+
+	case "Query.restaurantsByDateAndDayOfWeek":
+		if e.complexity.Query.RestaurantsByDateAndDayOfWeek == nil {
+			break
+		}
+
+		args, err := ec.field_Query_restaurantsByDateAndDayOfWeek_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.RestaurantsByDateAndDayOfWeek(childComplexity, args["date"].(string)), true
+
+	case "Query.typedMenuByDate":
+		if e.complexity.Query.TypedMenuByDate == nil {
+			break
+		}
+
+		args, err := ec.field_Query_typedMenuByDate_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.TypedMenuByDate(childComplexity, args["date"].(string)), true
 
 	case "Restaurant.date":
 		if e.complexity.Restaurant.Date == nil {
@@ -214,6 +269,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Restaurant.Name(childComplexity), true
+
+	case "TypedMenuItem.menu":
+		if e.complexity.TypedMenuItem.Menu == nil {
+			break
+		}
+
+		return e.complexity.TypedMenuItem.Menu(childComplexity), true
+
+	case "TypedMenuItem.type":
+		if e.complexity.TypedMenuItem.Type == nil {
+			break
+		}
+
+		return e.complexity.TypedMenuItem.Type(childComplexity), true
 
 	}
 	return 0, false
@@ -386,7 +455,52 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_menuItemsByType_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["type"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["type"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_restaurantsByDateAndDayOfWeek_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["date"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("date"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["date"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_restaurantsByDate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["date"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("date"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["date"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_typedMenuByDate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -703,6 +817,57 @@ func (ec *executionContext) fieldContext_MenuItem_dayOfWeek(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _MenuItem_restaurant(ctx context.Context, field graphql.CollectedField, obj *model.MenuItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MenuItem_restaurant(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Restaurant, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Restaurant)
+	fc.Result = res
+	return ec.marshalORestaurant2ᚖgithubᚗcomᚋJeberlenᚋlunchtogetherᚋgraphᚋmodelᚐRestaurant(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MenuItem_restaurant(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MenuItem",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Restaurant_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Restaurant_name(ctx, field)
+			case "date":
+				return ec.fieldContext_Restaurant_date(ctx, field)
+			case "menu":
+				return ec.fieldContext_Restaurant_menu(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Restaurant", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createRestaurant(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_createRestaurant(ctx, field)
 	if err != nil {
@@ -819,6 +984,8 @@ func (ec *executionContext) fieldContext_Mutation_createMenuItem(ctx context.Con
 				return ec.fieldContext_MenuItem_url(ctx, field)
 			case "dayOfWeek":
 				return ec.fieldContext_MenuItem_dayOfWeek(ctx, field)
+			case "restaurant":
+				return ec.fieldContext_MenuItem_restaurant(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type MenuItem", field.Name)
 		},
@@ -950,6 +1117,203 @@ func (ec *executionContext) fieldContext_Query_restaurantsByDate(ctx context.Con
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_restaurantsByDate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_restaurantsByDateAndDayOfWeek(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_restaurantsByDateAndDayOfWeek(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().RestaurantsByDateAndDayOfWeek(rctx, fc.Args["date"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Restaurant)
+	fc.Result = res
+	return ec.marshalNRestaurant2ᚕᚖgithubᚗcomᚋJeberlenᚋlunchtogetherᚋgraphᚋmodelᚐRestaurantᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_restaurantsByDateAndDayOfWeek(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Restaurant_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Restaurant_name(ctx, field)
+			case "date":
+				return ec.fieldContext_Restaurant_date(ctx, field)
+			case "menu":
+				return ec.fieldContext_Restaurant_menu(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Restaurant", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_restaurantsByDateAndDayOfWeek_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_typedMenuByDate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_typedMenuByDate(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().TypedMenuByDate(rctx, fc.Args["date"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.TypedMenuItem)
+	fc.Result = res
+	return ec.marshalNTypedMenuItem2ᚕᚖgithubᚗcomᚋJeberlenᚋlunchtogetherᚋgraphᚋmodelᚐTypedMenuItemᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_typedMenuByDate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "type":
+				return ec.fieldContext_TypedMenuItem_type(ctx, field)
+			case "menu":
+				return ec.fieldContext_TypedMenuItem_menu(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TypedMenuItem", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_typedMenuByDate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_menuItemsByType(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_menuItemsByType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().MenuItemsByType(rctx, fc.Args["type"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.MenuItem)
+	fc.Result = res
+	return ec.marshalNMenuItem2ᚕᚖgithubᚗcomᚋJeberlenᚋlunchtogetherᚋgraphᚋmodelᚐMenuItemᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_menuItemsByType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_MenuItem_id(ctx, field)
+			case "type":
+				return ec.fieldContext_MenuItem_type(ctx, field)
+			case "name":
+				return ec.fieldContext_MenuItem_name(ctx, field)
+			case "description":
+				return ec.fieldContext_MenuItem_description(ctx, field)
+			case "url":
+				return ec.fieldContext_MenuItem_url(ctx, field)
+			case "dayOfWeek":
+				return ec.fieldContext_MenuItem_dayOfWeek(ctx, field)
+			case "restaurant":
+				return ec.fieldContext_MenuItem_restaurant(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MenuItem", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_menuItemsByType_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -1268,6 +1632,112 @@ func (ec *executionContext) fieldContext_Restaurant_menu(ctx context.Context, fi
 				return ec.fieldContext_MenuItem_url(ctx, field)
 			case "dayOfWeek":
 				return ec.fieldContext_MenuItem_dayOfWeek(ctx, field)
+			case "restaurant":
+				return ec.fieldContext_MenuItem_restaurant(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MenuItem", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TypedMenuItem_type(ctx context.Context, field graphql.CollectedField, obj *model.TypedMenuItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TypedMenuItem_type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TypedMenuItem_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TypedMenuItem",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TypedMenuItem_menu(ctx context.Context, field graphql.CollectedField, obj *model.TypedMenuItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TypedMenuItem_menu(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Menu, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.MenuItem)
+	fc.Result = res
+	return ec.marshalNMenuItem2ᚕᚖgithubᚗcomᚋJeberlenᚋlunchtogetherᚋgraphᚋmodelᚐMenuItemᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TypedMenuItem_menu(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TypedMenuItem",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_MenuItem_id(ctx, field)
+			case "type":
+				return ec.fieldContext_MenuItem_type(ctx, field)
+			case "name":
+				return ec.fieldContext_MenuItem_name(ctx, field)
+			case "description":
+				return ec.fieldContext_MenuItem_description(ctx, field)
+			case "url":
+				return ec.fieldContext_MenuItem_url(ctx, field)
+			case "dayOfWeek":
+				return ec.fieldContext_MenuItem_dayOfWeek(ctx, field)
+			case "restaurant":
+				return ec.fieldContext_MenuItem_restaurant(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type MenuItem", field.Name)
 		},
@@ -3055,7 +3525,7 @@ func (ec *executionContext) unmarshalInputNewMenuItem(ctx context.Context, obj i
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"type", "name", "description", "url", "dayOfWeek"}
+	fieldsInOrder := [...]string{"type", "name", "description", "url", "dayOfWeek", "restaurant"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3097,6 +3567,13 @@ func (ec *executionContext) unmarshalInputNewMenuItem(ctx context.Context, obj i
 				return it, err
 			}
 			it.DayOfWeek = data
+		case "restaurant":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("restaurant"))
+			data, err := ec.unmarshalONewRestaurant2ᚖgithubᚗcomᚋJeberlenᚋlunchtogetherᚋgraphᚋmodelᚐNewRestaurant(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Restaurant = data
 		}
 	}
 
@@ -3193,6 +3670,8 @@ func (ec *executionContext) _MenuItem(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "restaurant":
+			out.Values[i] = ec._MenuItem_restaurant(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3335,6 +3814,72 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "restaurantsByDateAndDayOfWeek":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_restaurantsByDateAndDayOfWeek(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "typedMenuByDate":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_typedMenuByDate(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "menuItemsByType":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_menuItemsByType(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -3394,6 +3939,50 @@ func (ec *executionContext) _Restaurant(ctx context.Context, sel ast.SelectionSe
 			}
 		case "menu":
 			out.Values[i] = ec._Restaurant_menu(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var typedMenuItemImplementors = []string{"TypedMenuItem"}
+
+func (ec *executionContext) _TypedMenuItem(ctx context.Context, sel ast.SelectionSet, obj *model.TypedMenuItem) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, typedMenuItemImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TypedMenuItem")
+		case "type":
+			out.Values[i] = ec._TypedMenuItem_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "menu":
+			out.Values[i] = ec._TypedMenuItem_menu(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -3924,6 +4513,60 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) marshalNTypedMenuItem2ᚕᚖgithubᚗcomᚋJeberlenᚋlunchtogetherᚋgraphᚋmodelᚐTypedMenuItemᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.TypedMenuItem) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNTypedMenuItem2ᚖgithubᚗcomᚋJeberlenᚋlunchtogetherᚋgraphᚋmodelᚐTypedMenuItem(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNTypedMenuItem2ᚖgithubᚗcomᚋJeberlenᚋlunchtogetherᚋgraphᚋmodelᚐTypedMenuItem(ctx context.Context, sel ast.SelectionSet, v *model.TypedMenuItem) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TypedMenuItem(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
 	return ec.___Directive(ctx, sel, &v)
 }
@@ -4201,6 +4844,21 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalONewRestaurant2ᚖgithubᚗcomᚋJeberlenᚋlunchtogetherᚋgraphᚋmodelᚐNewRestaurant(ctx context.Context, v interface{}) (*model.NewRestaurant, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputNewRestaurant(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalORestaurant2ᚖgithubᚗcomᚋJeberlenᚋlunchtogetherᚋgraphᚋmodelᚐRestaurant(ctx context.Context, sel ast.SelectionSet, v *model.Restaurant) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Restaurant(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

@@ -2,6 +2,12 @@
 #
 # https://gqlgen.com/getting-started/
 
+
+type TypedMenuItem {
+  type: String!
+  menu: [MenuItem!]!
+}
+
 type MenuItem {
   id: String!
   type: String!
@@ -22,8 +28,9 @@ type Restaurant {
 type Query {
   restaurants: [Restaurant!]!
   restaurantsByDate(date: String!): [Restaurant!]!
+
   restaurantsByDateAndDayOfWeek(date: String!): [Restaurant!]!
-  menuByDate(date: String!): [MenuItem!]!
+  typedMenuByDate(date: String!): [TypedMenuItem!]!
   menuItemsByType(type: String!): [MenuItem!]!
 }
 
@@ -39,6 +46,7 @@ input NewMenuItem {
   description: String!
   url: String!
   dayOfWeek: String!
+  restaurant: NewRestaurant
 }
 
 type Mutation {

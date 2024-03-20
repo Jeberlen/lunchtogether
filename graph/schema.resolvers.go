@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -15,6 +16,37 @@ import (
 	"github.com/Jeberlen/lunchtogether/restaurant_menues"
 	restaurant "github.com/Jeberlen/lunchtogether/restaurants"
 )
+
+func filter(objects []*model.MenuItem, condition func(*model.MenuItem) bool) []*model.MenuItem {
+	var filtered []*model.MenuItem
+	for _, obj := range objects {
+		if condition(obj) {
+			filtered = append(filtered, obj)
+		}
+	}
+	return filtered
+}
+
+func getUnique[T any, Key comparable](objects []*T, getKey func(*T) Key) []*T {
+	// Create a map to store unique objects based on the key attribute
+	uniqueObjectsMap := make(map[Key]*T)
+
+	// Iterate over the objects, adding unique objects to the map
+	for _, obj := range objects {
+		key := getKey(obj)
+		if _, ok := uniqueObjectsMap[key]; !ok {
+			uniqueObjectsMap[key] = obj
+		}
+	}
+
+	// Convert the unique objects map back to a slice
+	var uniqueObjects []*T
+	for _, obj := range uniqueObjectsMap {
+		uniqueObjects = append(uniqueObjects, obj)
+	}
+
+	return uniqueObjects
+}
 
 // CreateRestaurant is the resolver for the createRestaurant field.
 func (r *mutationResolver) CreateRestaurant(ctx context.Context, input model.NewRestaurant) (*model.Restaurant, error) {
@@ -83,10 +115,10 @@ func (r *queryResolver) Restaurants(ctx context.Context) ([]*model.Restaurant, e
 				Name:        menu.Name,
 				Description: menu.Description,
 				URL:         menu.URL,
-				DayOfWeek:   menu.DayOfWeek}
+				DayOfWeek:   menu.DayOfWeek,
+			}
 			menu_map = append(menu_map, item)
 		}
-		log.Print(restaurant.Name)
 
 		results = append(results, &model.Restaurant{ID: restaurant.ID, Name: restaurant.Name, Date: restaurant.Date, Menu: menu_map})
 	}
@@ -99,14 +131,11 @@ func (r *queryResolver) RestaurantsByDate(ctx context.Context, date string) ([]*
 	var dateObject, _ = time.Parse(shortForm, date)
 	_, dateAsWeek := dateObject.ISOWeek()
 
-	log.Print("date as week: " + strconv.Itoa(dateAsWeek))
-
 	var results []*model.Restaurant
 	dateString := strconv.Itoa(dateAsWeek)
 	var dbRestaurant = restaurant.GetResturantByDate(dateString)
 
 	for _, restaurant := range dbRestaurant {
-
 		var menu_map []*model.MenuItem
 		for _, menu := range restaurant.Menu {
 			item := &model.MenuItem{
@@ -122,6 +151,79 @@ func (r *queryResolver) RestaurantsByDate(ctx context.Context, date string) ([]*
 		results = append(results, &model.Restaurant{ID: restaurant.ID, Name: restaurant.Name, Date: restaurant.Date, Menu: menu_map})
 	}
 	return results, nil
+}
+
+// RestaurantsByDateAndDayOfWeek is the resolver for the restaurantsByDateAndDayOfWeek field.
+func (r *queryResolver) RestaurantsByDateAndDayOfWeek(ctx context.Context, date string) ([]*model.Restaurant, error) {
+	panic(fmt.Errorf("not implemented: RestaurantsByDateAndDayOfWeek - restaurantsByDateAndDayOfWeek"))
+}
+
+// TypedMenuByDate is the resolver for the typedMenuByDate field.
+func (r *queryResolver) TypedMenuByDate(ctx context.Context, date string) ([]*model.TypedMenuItem, error) {
+
+	var results []*model.TypedMenuItem
+	dbRestaurant := menu_items.GetMenuByDate(date)
+
+	var listOfTypes []string
+
+	var menuItems []*model.MenuItem
+	for _, menu := range dbRestaurant {
+		listOfTypes = append(listOfTypes, menu.Type)
+		restaurantByMenuId := restaurant.GetRestaurantByMenuId(menu.ID)
+
+		restaurant := &model.Restaurant{
+			ID:   restaurantByMenuId.ID,
+			Name: restaurantByMenuId.Name,
+			Date: restaurantByMenuId.Date,
+		}
+
+		menuItem := &model.MenuItem{
+			ID:          menu.ID,
+			Name:        menu.Name,
+			Description: menu.Description,
+			Type:        menu.Type,
+			URL:         menu.URL,
+			DayOfWeek:   menu.DayOfWeek,
+			Restaurant:  restaurant,
+		}
+		menuItems = append(menuItems, menuItem)
+	}
+
+	typeSet := make(map[string]bool)
+	for _, typ := range listOfTypes {
+		typeSet[typ] = true
+	}
+
+	for k, _ := range typeSet {
+		var typedMenuItem model.TypedMenuItem
+
+		filteredItems := filter(menuItems, func(obj *model.MenuItem) bool {
+			return k == obj.Type
+		})
+
+		for _, item := range filteredItems {
+			if item.Type == k {
+				typedMenuItem.Type = k
+				log.Print("Added to same menu")
+				log.Print("name " + item.Name)
+				log.Print("desc " + item.Description)
+				log.Print("type " + item.Type)
+				log.Print("day " + item.DayOfWeek)
+
+				typedMenuItem.Menu = append(typedMenuItem.Menu, item)
+			}
+		}
+
+		//typedMenuItem.Menu = uniqueMenuItems
+		results = append(results, &typedMenuItem)
+	}
+
+	return results, nil
+}
+
+// MenuItemsByType is the resolver for the menuItemsByType field.
+func (r *queryResolver) MenuItemsByType(ctx context.Context, typeArg string) ([]*model.MenuItem, error) {
+	panic(fmt.Errorf("not implemented: MenuItemsByType - menuItemsByType"))
 }
 
 // Mutation returns MutationResolver implementation.

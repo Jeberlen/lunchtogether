@@ -227,3 +227,50 @@ func GetResturantByDate(date string) []Restaurant {
 
 	return restaurants
 }
+
+func GetRestaurantByMenuId(id string) *Restaurant {
+	stmt, err := database.Db.Prepare(
+		fmt.Sprintf("select restaurant_id from restaurant_menu where menu_item_id = '%s'", id),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer stmt.Close()
+
+	restaurantIdRows, err := stmt.Query()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var restaurant Restaurant
+	for restaurantIdRows.Next() {
+		var restaurantId string
+		err := restaurantIdRows.Scan(&restaurantId)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		stmt, err := database.Db.Prepare(
+			fmt.Sprintf("select id, name, date from restaurant where id = '%s'", restaurantId),
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer stmt.Close()
+
+		restaurants, err := stmt.Query()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for restaurants.Next() {
+			restaurants.Scan(
+				&restaurant.ID,
+				&restaurant.Name,
+				&restaurant.Date,
+			)
+		}
+	}
+
+	return &restaurant
+}
