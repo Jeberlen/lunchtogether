@@ -10,6 +10,7 @@ import (
 	database "github.com/Jeberlen/lunchtogether/db"
 	"github.com/Jeberlen/lunchtogether/graph"
 	crawler "github.com/Jeberlen/lunchtogether/hojdencrawler"
+	"github.com/rs/cors"
 )
 
 const defaultPort = "8080"
@@ -27,11 +28,29 @@ func main() {
 	crawler.StartCrawl()
 	log.Print("ending crawl")
 
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+	// Create a GraphQL server
+	gqlHandler := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
+		Resolvers: &graph.Resolver{},
+	}))
+
+	// Define CORS options to allow all origins
+	cors := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"}, // Allow all origins
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+		Debug:            true,
+	})
+
+	handler := cors.Handler(gqlHandler)
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	http.Handle("/query", handler)
+
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	err := http.ListenAndServe(":"+port, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
