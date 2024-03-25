@@ -36,8 +36,7 @@ func (menu_item MenuItem) Save() int64 {
 	return id
 }
 
-func GetMenuByDate(date string) []MenuItem {
-
+func GetMenuByDateAndType(date string, typeStr string) []MenuItem {
 	dateAsObject, err := time.Parse("2006-Jan-02", date)
 	if err != nil {
 		log.Fatal(err)
@@ -45,7 +44,7 @@ func GetMenuByDate(date string) []MenuItem {
 	dayOfWeek := int(dateAsObject.Weekday())
 
 	stmt, err := database.Db.Prepare(
-		fmt.Sprintf("select id, name, description, type, dayOfWeek, url from menu_item where dayOfWeek = '%d'", dayOfWeek),
+		fmt.Sprintf("select id, name, description, type, dayOfWeek, url from menu_item where dayOfWeek = '%d' and type ='%s'", dayOfWeek, typeStr),
 	)
 	if err != nil {
 		log.Fatal(err)

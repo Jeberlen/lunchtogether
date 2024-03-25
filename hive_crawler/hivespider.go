@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -34,26 +33,35 @@ func allFieldsNotEmpty(s interface{}) bool {
 	return true
 }
 
-// getUnique returns unique objects based on a specified key attribute
-func getUnique[T any, Key comparable](objects []T, getKey func(T) Key) []T {
-	// Create a map to store unique objects based on the key attribute
-	uniqueObjectsMap := make(map[Key]T)
+func removeStrings(inputStrings []string, toRemove ...string) []string {
+	result := make([]string, 0)
+	removeSet := make(map[string]bool)
 
-	// Iterate over the objects, adding unique objects to the map
-	for _, obj := range objects {
-		key := getKey(obj)
-		if _, ok := uniqueObjectsMap[key]; !ok {
-			uniqueObjectsMap[key] = obj
+	// Create a set for strings to remove
+	for _, s := range toRemove {
+		removeSet[s] = true
+	}
+
+	// Iterate through the input strings, appending non-removed strings to the result
+	for _, s := range inputStrings {
+		s := strings.TrimSpace(s)
+		if !removeSet[s] {
+			result = append(result, s)
 		}
 	}
 
-	// Convert the unique objects map back to a slice
-	var uniqueObjects []T
-	for _, obj := range uniqueObjectsMap {
-		uniqueObjects = append(uniqueObjects, obj)
+	return result
+}
+
+func contains(slice []string, str string) bool {
+
+	for _, item := range slice {
+		if item == str {
+			return true
+		}
 	}
 
-	return uniqueObjects
+	return false
 }
 
 func InitSpider() {
@@ -72,44 +80,15 @@ func StartCrawl() {
 
 	collector.OnHTML("#main", func(h *colly.HTMLElement) {
 		var restaurant restaurants.Restaurant
-		var menuItems []menu_items.MenuItem
 
 		restaurant.Name = "The Hive"
 		_, currentWeek := time.Now().ISOWeek()
 		restaurant.Date = strconv.Itoa(currentWeek)
 
-		var salads []menu_items.MenuItem
-		h.ForEach("#av_section_1", func(i int, h *colly.HTMLElement) {
-			h.ForEach(".OYPEnA", func(i int, h *colly.HTMLElement) {
-				var menuItem menu_items.MenuItem
-				salladSlice := strings.Split(h.Text, "\n")
-				name := salladSlice[0]
-				desc := salladSlice[1]
-
-				menuItem.Name = name
-				menuItem.Description = desc
-				menuItem.Type = "salad"
-				menuItem.URL = "https://thehivefoodmarket.se/"
-
-				for i := 1; i < 6; i++ {
-					menuItem.DayOfWeek = strconv.Itoa(i)
-					salads = append(salads, menuItem)
-				}
-			})
-		})
-
-		uniqueSalads := getUnique(salads, func(obj menu_items.MenuItem) string {
-			return obj.Name
-		})
-
-		menuItems = append(menuItems, uniqueSalads...)
-		var dailyFood []menu_items.MenuItem
-		meatTypes := []string{"pork", "beef", "chicken", "ham", "pannbiff", "bacon"}
-		fishTypes := []string{"fish", "shrimp"}
-
+		var menuItems []menu_items.MenuItem
 		h.ForEach(".avia-section", func(i int, h *colly.HTMLElement) {
 			day := h.ChildText(".av-special-heading")
-			h.ForEach(".av_textblock_section", func(i int, h *colly.HTMLElement) {
+			h.ForEachWithBreak(".av_textblock_section", func(i int, h *colly.HTMLElement) bool {
 				dailySlice := strings.Split(h.Text, "\n")
 				type HiveMenuItem struct {
 					Name        string
@@ -118,78 +97,75 @@ func StartCrawl() {
 					URL         string
 					DayOfWeek   string
 				}
-				var hiveMenuItem HiveMenuItem
-				for i, food := range dailySlice {
 
-					if i < len(dailySlice)-1 {
-						if len(food) == 0 {
-							remove(dailySlice, i+1)
-							continue
-						}
-
-						switch food {
-						case "MONDO":
-							remove(dailySlice, i+1)
-							continue
-						case "SPICE CLUB":
-							remove(dailySlice, i+1)
-							continue
-						case "HUSMANSKOST":
-							remove(dailySlice, i+1)
-							continue
-						case "W EST COAST":
-							remove(dailySlice, i+1)
-							continue
-						case "PIZZA":
-							remove(dailySlice, i+1)
-							continue
-						case "TRUE FOOD":
-							remove(dailySlice, i+1)
-							continue
-						}
-					}
-
+				stringsToRemove := []string{"", "MONDO", "SPICE CLUB", "HUSMANSKOST", "WEST COAST", "PIZZA", "TRUE FOOD", "Salads Of The Week"}
+				filteredStrings := removeStrings(dailySlice, stringsToRemove...)
+				if len(filteredStrings) == 0 {
+					return false
 				}
+				for i, food := range filteredStrings {
+					var hiveMenuItem HiveMenuItem
+					if i%2 == 0 {
+						switch day {
+						case "MONDAY":
+							hiveMenuItem.DayOfWeek = "1"
+							hiveMenuItem.URL = "https://thehivefoodmarket.se/#monday"
+						case "TUESDAY":
+							hiveMenuItem.DayOfWeek = "2"
+							hiveMenuItem.URL = "https://thehivefoodmarket.se/#tuesday"
+						case "WEDNESDAY":
+							hiveMenuItem.DayOfWeek = "3"
+							hiveMenuItem.URL = "https://thehivefoodmarket.se/#wednesday"
+						case "THURSDAY":
+							hiveMenuItem.DayOfWeek = "4"
+							hiveMenuItem.URL = "https://thehivefoodmarket.se/#thursday"
+						case "FRIDAY":
+							hiveMenuItem.DayOfWeek = "5"
+							hiveMenuItem.URL = "https://thehivefoodmarket.se/#friday"
+						default:
+							hiveMenuItem.DayOfWeek = "1"
+							hiveMenuItem.URL = "https://thehivefoodmarket.se/"
+						}
 
-				for _, food := range dailySlice[1:] {
-					switch day {
-					case "MONDAY":
-						hiveMenuItem.DayOfWeek = "1"
-					case "TUESDAY":
-						hiveMenuItem.DayOfWeek = "2"
-					case "WEDNESDAY":
-						hiveMenuItem.DayOfWeek = "3"
-					case "THURSDAY":
-						hiveMenuItem.DayOfWeek = "4"
-					case "FRIDAY":
-						hiveMenuItem.DayOfWeek = "5"
-					}
-
-					hiveMenuItem.URL = "https://thehivefoodmarket.se/#monday"
-
-					if len(food) < 45 && len(food) != 0 {
 						hiveMenuItem.Name = food
-					} else if len(food) >= 45 {
+						hiveMenuItem.Description = filteredStrings[i+1]
 
-						hiveMenuItem.Description = food
 						lowerCaseForComp := strings.ToLower(hiveMenuItem.Description)
 						noUnusedChars := strings.ReplaceAll(lowerCaseForComp, ",", "")
 						sliceOfDesc := strings.Split(noUnusedChars, " ")
 
+						meatTypes := []string{"fläsk", "pork", "beef", "chicken", "ham", "pannbiff", "bacon", "sirloin", "steak", "burger", "brisket"}
+						fishTypes := []string{"fish", "shrimp"}
+						saladTypes := []string{"salad"}
+						pizzaTypes := []string{"pizza"}
+						vegTypes := []string{"vegetarian", "vegan"}
+
 						for _, slice := range sliceOfDesc {
-							if slices.Contains(meatTypes, slice) || slices.Contains(meatTypes, strings.ToLower(hiveMenuItem.Name)) {
+							name := strings.TrimSpace(hiveMenuItem.Name)
+							name = strings.ToLower(name)
+							desc := strings.TrimSpace(slice)
+							desc = strings.ToLower(desc)
+
+							if contains(meatTypes, name) || contains(meatTypes, desc) {
 								hiveMenuItem.Type = "meat"
-								break
-							} else if slices.Contains(fishTypes, slice) {
+								break // Stop after first match
+							} else if contains(fishTypes, name) || contains(fishTypes, desc) {
 								hiveMenuItem.Type = "fish"
-								break
+								break // Stop after first match
+							} else if contains(saladTypes, name) || contains(saladTypes, desc) {
+								hiveMenuItem.Type = "salad"
+								break // Stop after first match
+							} else if contains(pizzaTypes, name) || contains(pizzaTypes, desc) {
+								hiveMenuItem.Type = "pizza"
+								break // Stop after first match
+							} else if contains(vegTypes, name) || contains(vegTypes, desc) {
+								hiveMenuItem.Type = "vegetarian"
+								break // Stop after first match
 							} else {
-								hiveMenuItem.Type = "vegitarian"
+								hiveMenuItem.Type = "other"
 							}
 						}
-					}
 
-					if allFieldsNotEmpty(hiveMenuItem) {
 						actualMenuItem := menu_items.MenuItem{
 							Name:        hiveMenuItem.Name,
 							Description: hiveMenuItem.Description,
@@ -197,17 +173,15 @@ func StartCrawl() {
 							URL:         hiveMenuItem.URL,
 							DayOfWeek:   hiveMenuItem.DayOfWeek,
 						}
-						dailyFood = append(dailyFood, actualMenuItem)
+
+						menuItems = append(menuItems, actualMenuItem)
+
 					}
 				}
+				return false
 			})
 		})
 
-		uniqueMenuItems := getUnique(dailyFood, func(obj menu_items.MenuItem) string {
-			return obj.Name
-		})
-
-		menuItems = append(menuItems, uniqueMenuItems...)
 		var ptrMenuItems []*menu_items.MenuItem
 		for i := range menuItems {
 			menuItemPointer := &menuItems[i]
@@ -215,6 +189,18 @@ func StartCrawl() {
 		}
 
 		restaurant.Menu = ptrMenuItems
+
+		log.Print(restaurant.Name)
+		log.Print(restaurant.Date)
+		for _, e := range restaurant.Menu {
+			log.Print(e.Name)
+			log.Print(e.Description)
+			log.Print(e.Type)
+			log.Print(e.DayOfWeek)
+			log.Print("-------------------------")
+
+		}
+
 		restaurant.SaveCompleteRestaurant()
 
 	})

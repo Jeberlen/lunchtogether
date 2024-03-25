@@ -16,8 +16,6 @@ type Restaurant struct {
 }
 
 func (restaurant Restaurant) SaveCompleteRestaurant() {
-	//var id int64
-
 	checkIfExistQuery := fmt.Sprintf("SELECT COUNT(*) FROM restaurant WHERE name='%s' AND date='%s'",
 		restaurant.Name,
 		restaurant.Date)

@@ -75,7 +75,7 @@ func StartCrawl() {
 						slices := strings.Split(h.Text, ": ")
 						for _, slice := range slices {
 							if strings.HasPrefix(slice, "GOOD VEGETARIAN") {
-								menuItem.Type = "vegitarian"
+								menuItem.Type = "vegetarian"
 							}
 							if strings.HasPrefix(slice, "MEAT") {
 								menuItem.Type = "meat"

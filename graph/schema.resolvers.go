@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 	"fmt"
-	"log"
 	"strconv"
 	"time"
 
@@ -162,59 +161,35 @@ func (r *queryResolver) RestaurantsByDateAndDayOfWeek(ctx context.Context, date 
 func (r *queryResolver) TypedMenuByDate(ctx context.Context, date string) ([]*model.TypedMenuItem, error) {
 
 	var results []*model.TypedMenuItem
-	dbRestaurant := menu_items.GetMenuByDate(date)
+	listOfTypes := []string{"meat", "fish", "vegetarian", "other", "salad"}
 
-	var listOfTypes []string
-
-	var menuItems []*model.MenuItem
-	for _, menu := range dbRestaurant {
-		listOfTypes = append(listOfTypes, menu.Type)
-		restaurantByMenuId := restaurant.GetRestaurantByMenuId(menu.ID)
-
-		restaurant := &model.Restaurant{
-			ID:   restaurantByMenuId.ID,
-			Name: restaurantByMenuId.Name,
-			Date: restaurantByMenuId.Date,
-		}
-
-		menuItem := &model.MenuItem{
-			ID:          menu.ID,
-			Name:        menu.Name,
-			Description: menu.Description,
-			Type:        menu.Type,
-			URL:         menu.URL,
-			DayOfWeek:   menu.DayOfWeek,
-			Restaurant:  restaurant,
-		}
-		menuItems = append(menuItems, menuItem)
-	}
-
-	typeSet := make(map[string]bool)
 	for _, typ := range listOfTypes {
-		typeSet[typ] = true
-	}
-
-	for k, _ := range typeSet {
-		var typedMenuItem model.TypedMenuItem
-
-		filteredItems := filter(menuItems, func(obj *model.MenuItem) bool {
-			return k == obj.Type
-		})
-
-		for _, item := range filteredItems {
-			if item.Type == k {
-				typedMenuItem.Type = k
-				log.Print("Added to same menu")
-				log.Print("name " + item.Name)
-				log.Print("desc " + item.Description)
-				log.Print("type " + item.Type)
-				log.Print("day " + item.DayOfWeek)
-
-				typedMenuItem.Menu = append(typedMenuItem.Menu, item)
+		dbRestaurant := menu_items.GetMenuByDateAndType(date, typ)
+		var menuItems []*model.MenuItem
+		for _, menu := range dbRestaurant {
+			restaurantByMenuId := restaurant.GetRestaurantByMenuId(menu.ID)
+			restaurant := &model.Restaurant{
+				ID:   restaurantByMenuId.ID,
+				Name: restaurantByMenuId.Name,
+				Date: restaurantByMenuId.Date,
 			}
+
+			menuItem := &model.MenuItem{
+				ID:          menu.ID,
+				Name:        menu.Name,
+				Description: menu.Description,
+				Type:        menu.Type,
+				URL:         menu.URL,
+				DayOfWeek:   menu.DayOfWeek,
+				Restaurant:  restaurant,
+			}
+			menuItems = append(menuItems, menuItem)
 		}
 
-		//typedMenuItem.Menu = uniqueMenuItems
+		var typedMenuItem model.TypedMenuItem
+		typedMenuItem.Type = typ
+		typedMenuItem.Menu = menuItems
+
 		results = append(results, &typedMenuItem)
 	}
 
