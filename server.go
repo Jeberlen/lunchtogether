@@ -11,7 +11,7 @@ import (
 	database "github.com/Jeberlen/lunchtogether/db"
 	"github.com/Jeberlen/lunchtogether/graph"
 	hiveCrawler "github.com/Jeberlen/lunchtogether/hivecrawler"
-	hojdenCrawler "github.com/Jeberlen/lunchtogether/hojden_crawler"
+	hojdenCrawler "github.com/Jeberlen/lunchtogether/hojdencrawler"
 	"github.com/rs/cors"
 )
 
