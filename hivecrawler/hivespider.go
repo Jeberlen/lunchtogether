@@ -119,6 +119,27 @@ func GetFoodTypeFromDescription(description string) string {
 	return "other"
 }
 
+func GetUnique[T any, Key comparable](objects []T, getKey func(T) Key) []T {
+	// Create a map to store unique objects based on the key attribute
+	uniqueObjectsMap := make(map[Key]T)
+
+	// Iterate over the objects, adding unique objects to the map
+	for _, obj := range objects {
+		key := getKey(obj)
+		if _, ok := uniqueObjectsMap[key]; !ok {
+			uniqueObjectsMap[key] = obj
+		}
+	}
+
+	// Convert the unique objects map back to a slice
+	var uniqueObjects []T
+	for _, obj := range uniqueObjectsMap {
+		uniqueObjects = append(uniqueObjects, obj)
+	}
+
+	return uniqueObjects
+}
+
 func InitSpider() {
 	collector = colly.NewCollector()
 }
@@ -139,8 +160,33 @@ func StartCrawl(waitGroup *sync.WaitGroup) {
 		restaurant.Name = "The Hive"
 		_, currentWeek := time.Now().ISOWeek()
 		restaurant.Date = strconv.Itoa(currentWeek)
-
 		var menuItems []menu_items.MenuItem
+
+		var salads []menu_items.MenuItem
+		h.ForEach("#av_section_1", func(i int, h *colly.HTMLElement) {
+			h.ForEach(".OYPEnA", func(i int, h *colly.HTMLElement) {
+				var menuItem menu_items.MenuItem
+				salladSlice := strings.Split(h.Text, "\n")
+				name := salladSlice[0]
+				desc := salladSlice[1]
+
+				menuItem.Name = name
+				menuItem.Description = desc
+				menuItem.Type = "salad"
+				menuItem.URL = "https://thehivefoodmarket.se/"
+
+				for i := 1; i < 6; i++ {
+					menuItem.DayOfWeek = strconv.Itoa(i)
+					salads = append(salads, menuItem)
+				}
+			})
+		})
+
+		uniqueSalads := GetUnique(salads, func(obj menu_items.MenuItem) string {
+			return obj.Name
+		})
+
+		menuItems = append(menuItems, uniqueSalads...)
 		h.ForEach(".avia-section", func(i int, h *colly.HTMLElement) {
 			day := h.ChildText(".av-special-heading")
 			h.ForEachWithBreak(".av_textblock_section", func(i int, h *colly.HTMLElement) bool {
