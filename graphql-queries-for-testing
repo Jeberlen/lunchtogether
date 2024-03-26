@@ -1,0 +1,100 @@
+query getAll {
+	restaurants{
+    name
+    date
+    menu {
+      name
+      type
+      description
+      url
+      dayOfWeek
+    }
+  }
+}
+
+query getByDate {
+  restaurantsByDate(date: "2024-Mar-26") {
+    name
+    date
+    menu {
+      name
+      type
+      description
+      url
+      dayOfWeek
+    }
+  }
+}
+
+query getMenuByDate {
+  typedMenuByDate(date: "2024-Mar-25") {
+    type
+    menu {
+      name
+      description
+      url
+      dayOfWeek
+      restaurant {
+        name
+        date
+      }
+    }
+  }
+}
+
+query getMenuByDateAndType {
+  typedMenuByDateAndType(date:"2024-Mar-26", type: "meat"){
+    type
+    menu {
+      name
+      description
+      url
+      dayOfWeek
+      restaurant {
+        name
+        date
+      }
+    }
+  }
+}
+
+
+mutation create {
+  createRestaurant (
+    input:{
+      name: "Gayathris Comfort Food", 
+      date: "13", 
+      menu: [
+        {
+          name:"Porkchops", 
+          type: "meat", 
+          description: "good meat thing", 
+          url: "nolink",
+          dayOfWeek: "1"
+        },
+        {
+          name:"Pasta", 
+          type: "vegitarian", 
+          description: "good vegitarian thing", 
+          url: "nolink",
+          dayOfWeek: "1"
+        },
+        {
+          name:"cod", 
+          type: "fish", 
+          description: "good fish thing", 
+          url: "nolink",
+          dayOfWeek: "1"
+        },
+        {
+          name:"pizza", 
+          type: "other", 
+          description: "good other thing", 
+          url: "nolink",
+          dayOfWeek: "1"
+        },
+      ]}
+  ){
+    name:name
+  }
+}
