@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 
 	"github.com/Jeberlen/lunchtogether/menu_items"
 	"github.com/Jeberlen/lunchtogether/restaurants"
@@ -24,7 +25,7 @@ func InitSpider() {
 	collector = colly.NewCollector()
 }
 
-func StartCrawl() {
+func StartCrawl(waitGroup *sync.WaitGroup) {
 
 	url := "https://volvo-cars.nordrest.se/hojden/"
 
@@ -121,6 +122,7 @@ func StartCrawl() {
 		log.Print("Starting to save complete restaurant")
 
 		restaurant.SaveCompleteRestaurant()
+		waitGroup.Done()
 
 	})
 
@@ -141,5 +143,7 @@ func StartCrawl() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	waitGroup.Done()
 
 }

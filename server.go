@@ -4,12 +4,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	database "github.com/Jeberlen/lunchtogether/db"
 	"github.com/Jeberlen/lunchtogether/graph"
-	hiveCrawler "github.com/Jeberlen/lunchtogether/hive_crawler"
+	hiveCrawler "github.com/Jeberlen/lunchtogether/hivecrawler"
 	hojdenCrawler "github.com/Jeberlen/lunchtogether/hojden_crawler"
 	"github.com/rs/cors"
 )
@@ -25,9 +26,14 @@ func main() {
 	database.InitDB()
 	defer database.CloseDB()
 
+	var waitGroup sync.WaitGroup
+	waitGroup.Add(3)
+
 	log.Print("starting to crawl")
-	hojdenCrawler.StartCrawl()
-	hiveCrawler.StartCrawl()
+	go hojdenCrawler.StartCrawl(&waitGroup)
+	go hiveCrawler.StartCrawl(&waitGroup)
+	waitGroup.Wait()
+
 	log.Print("ending crawl")
 
 	// Create a GraphQL server
