@@ -1,4 +1,4 @@
-package hivecrawler
+package harvestcrawler
 
 import (
 	"fmt"
@@ -125,7 +125,7 @@ func InitSpider() {
 
 func StartCrawl(waitGroup *sync.WaitGroup) {
 
-	url := "https://thehivefoodmarket.se/"
+	url := "https://harvestrestaurant.se/#lunch"
 
 	InitSpider()
 
@@ -135,63 +135,13 @@ func StartCrawl(waitGroup *sync.WaitGroup) {
 
 	collector.OnHTML("#main", func(h *colly.HTMLElement) {
 		var restaurant restaurants.Restaurant
-
-		restaurant.Name = "The Hive"
+		restaurant.Name = "Harvest by Mannerström"
 		_, currentWeek := time.Now().ISOWeek()
 		restaurant.Date = strconv.Itoa(currentWeek)
 		var menuItems []menu_items.MenuItem
 
-		var salads []menu_items.MenuItem
-		h.ForEach("#av_section_1", func(i int, h *colly.HTMLElement) {
-			h.ForEach(".OYPEnA", func(i int, h *colly.HTMLElement) {
-				var menuItem menu_items.MenuItem
-				salladSlice := strings.Split(h.Text, "\n")
-				name := salladSlice[0]
-				desc := salladSlice[1]
-
-				menuItem.Name = name
-				menuItem.Description = desc
-				menuItem.Type = "salad"
-				menuItem.URL = "https://thehivefoodmarket.se/"
-
-				for i := 1; i < 6; i++ {
-					menuItem.DayOfWeek = strconv.Itoa(i)
-					salads = append(salads, menuItem)
-				}
-			})
-		})
-
-		menuItems = append(menuItems, salads...)
-		h.ForEach(".avia-section", func(i int, h *colly.HTMLElement) {
-			day := h.ChildText(".av-special-heading")
-			h.ForEachWithBreak(".av_textblock_section", func(i int, h *colly.HTMLElement) bool {
-				dailySlice := strings.Split(h.Text, "\n")
-				stringsToRemove := []string{"", "MONDO", "SPICE CLUB", "HUSMANSKOST", "WEST COAST", "PIZZA", "TRUE FOOD", "Salads Of The Week"}
-				filteredStrings := RemoveStrings(dailySlice, stringsToRemove...)
-				if len(filteredStrings) == 0 {
-					return false
-				}
-				for i, food := range filteredStrings {
-					var hiveMenuItem menu_items.MenuItem
-					if i%2 == 0 {
-
-						day, url := GetDayOfWeek(day)
-						hiveMenuItem.DayOfWeek = day
-						hiveMenuItem.URL = url
-						hiveMenuItem.Name = food
-						hiveMenuItem.Description = filteredStrings[i+1]
-
-						foodType := GetFoodTypeFromName(hiveMenuItem.Name)
-						if foodType == "other" {
-							foodType = GetFoodTypeFromDescription(hiveMenuItem.Description)
-						}
-						hiveMenuItem.Type = foodType
-
-						menuItems = append(menuItems, hiveMenuItem)
-					}
-				}
-				return false
-			})
+		h.ForEach(".content", func(i int, h *colly.HTMLElement) {
+			log.Print(h.Text)
 		})
 
 		var ptrMenuItems []*menu_items.MenuItem
@@ -201,6 +151,17 @@ func StartCrawl(waitGroup *sync.WaitGroup) {
 		}
 
 		restaurant.Menu = ptrMenuItems
+
+		log.Print(restaurant.Name)
+		log.Print(restaurant.Date)
+		for _, e := range restaurant.Menu {
+			log.Print(e.Name)
+			log.Print(e.Description)
+			log.Print(e.Type)
+			log.Print(e.DayOfWeek)
+			log.Print("-------------------------")
+
+		}
 		restaurant.SaveCompleteRestaurant()
 	})
 
