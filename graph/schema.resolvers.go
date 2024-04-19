@@ -131,11 +131,16 @@ func (r *queryResolver) TypedMenuByDate(ctx context.Context, date string) ([]*mo
 	var results []*model.TypedMenuItem
 	listOfTypes := []string{"meat", "fish", "vegetarian", "other", "salad"}
 
+	const shortForm = "2006-Jan-02"
+	var dateObject, _ = time.Parse(shortForm, date)
+	_, dateAsWeek := dateObject.ISOWeek()
+	strWeek := strconv.Itoa(dateAsWeek)
+
 	for _, typ := range listOfTypes {
 		dbRestaurant := menu_items.GetMenuByDateAndType(date, typ)
 		var menuItems []*model.MenuItem
 		for _, menu := range dbRestaurant {
-			restaurantByMenuId := restaurant.GetRestaurantByMenuId(menu.ID)
+			restaurantByMenuId := restaurant.GetRestaurantByMenuIdAndDate(menu.ID, strWeek)
 			restaurant := &model.Restaurant{
 				ID:   restaurantByMenuId.ID,
 				Name: restaurantByMenuId.Name,
@@ -151,7 +156,9 @@ func (r *queryResolver) TypedMenuByDate(ctx context.Context, date string) ([]*mo
 				DayOfWeek:   menu.DayOfWeek,
 				Restaurant:  restaurant,
 			}
-			menuItems = append(menuItems, menuItem)
+			if menuItem.Restaurant.Name != "" {
+				menuItems = append(menuItems, menuItem)
+			}
 		}
 
 		var typedMenuItem model.TypedMenuItem

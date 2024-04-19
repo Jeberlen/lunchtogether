@@ -10,25 +10,12 @@ import (
 
 	"github.com/Jeberlen/lunchtogether/menu_items"
 	"github.com/Jeberlen/lunchtogether/restaurants"
+	utils "github.com/Jeberlen/lunchtogether/utils"
+
 	"github.com/gocolly/colly"
 )
 
 var collector *colly.Collector
-var meatTypes = []string{
-	"ham",
-	"entrecôte", "turkey", "lamb",
-	"veal", "rib", "fläsk", "pork",
-	"beef", "chicken", "pannbiff",
-	"bacon", "sirloin", "steak", "burger",
-	"brisket", "kebab"}
-var fishTypes = []string{
-	"fish", "shrimp", "prawn", "clam",
-	"clams", "crab", "salmon", "tuna",
-	"tilapia", "cod", "snapper", "sardine",
-	"sardines", "herring", "haddock",
-	"flounder", "trout", "pollock", "bass",
-	"halibut", "pike", "mackerel"}
-var vegTypes = []string{"vegetarian", "vegan", "veggie", "halloumi", "pannoumi"}
 
 func RemoveStrings(inputStrings []string, toRemove ...string) []string {
 	result := make([]string, 0)
@@ -50,17 +37,6 @@ func RemoveStrings(inputStrings []string, toRemove ...string) []string {
 	return result
 }
 
-func Contains(slice []string, str string) bool {
-
-	for _, item := range slice {
-		if item == str {
-			return true
-		}
-	}
-
-	return false
-}
-
 func GetDayOfWeek(day string) (string, string) {
 	switch day {
 	case "MONDAY":
@@ -76,47 +52,6 @@ func GetDayOfWeek(day string) (string, string) {
 	default:
 		return "1", "https://thehivefoodmarket.se/"
 	}
-}
-
-func GetFoodTypeFromName(name string) string {
-	name = strings.TrimSpace(name)
-	name = strings.ToLower(name)
-	slicesOfName := strings.Split(name, " ")
-
-	for _, slice := range slicesOfName {
-
-		wordInName := strings.TrimSpace(slice)
-		wordInName = strings.ToLower(wordInName)
-
-		if Contains(fishTypes, wordInName) {
-			return "fish"
-		} else if Contains(meatTypes, wordInName) {
-			return "meat"
-		} else if Contains(vegTypes, wordInName) {
-			return "vegetarian"
-		}
-	}
-	return "other"
-}
-
-func GetFoodTypeFromDescription(description string) string {
-	description = strings.ToLower(description)
-	description = strings.ReplaceAll(description, ",", "")
-	sliceOfDesc := strings.Split(description, " ")
-
-	for _, slice := range sliceOfDesc {
-		desc := strings.TrimSpace(slice)
-		desc = strings.ToLower(desc)
-
-		if Contains(meatTypes, desc) {
-			return "meat"
-		} else if Contains(fishTypes, desc) {
-			return "fish"
-		} else if Contains(vegTypes, desc) {
-			return "vegetarian"
-		}
-	}
-	return "other"
 }
 
 func InitSpider() {
@@ -181,9 +116,9 @@ func StartCrawl(waitGroup *sync.WaitGroup) {
 						hiveMenuItem.Name = food
 						hiveMenuItem.Description = filteredStrings[i+1]
 
-						foodType := GetFoodTypeFromName(hiveMenuItem.Name)
+						foodType := utils.GetFoodTypeFromName(hiveMenuItem.Name)
 						if foodType == "other" {
-							foodType = GetFoodTypeFromDescription(hiveMenuItem.Description)
+							foodType = utils.GetFoodTypeFromDescription(hiveMenuItem.Description)
 						}
 						hiveMenuItem.Type = foodType
 
@@ -201,17 +136,6 @@ func StartCrawl(waitGroup *sync.WaitGroup) {
 		}
 
 		restaurant.Menu = ptrMenuItems
-
-		log.Print(restaurant.Name)
-		log.Print(restaurant.Date)
-		for _, e := range restaurant.Menu {
-			log.Print(e.Name)
-			log.Print(e.Description)
-			log.Print(e.Type)
-			log.Print(e.DayOfWeek)
-			log.Print("-------------------------")
-
-		}
 		restaurant.SaveCompleteRestaurant()
 	})
 

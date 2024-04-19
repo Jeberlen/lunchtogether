@@ -8,6 +8,8 @@ import (
 
 	"github.com/Jeberlen/lunchtogether/menu_items"
 	"github.com/Jeberlen/lunchtogether/restaurants"
+	utils "github.com/Jeberlen/lunchtogether/utils"
+
 	"github.com/gocolly/colly"
 )
 
@@ -85,21 +87,9 @@ func StartCrawl(waitGroup *sync.WaitGroup) {
 
 				h.ForEach(".eng-meny", func(i int, h *colly.HTMLElement) {
 					if HasTypePrefix(h.Text) {
+
 						slices := strings.Split(h.Text, ": ")
 						for _, slice := range slices {
-							if strings.HasPrefix(slice, "GOOD VEGETARIAN") {
-								menuItem.Type = "vegetarian"
-							}
-							if strings.HasPrefix(slice, "MEAT") {
-								menuItem.Type = "meat"
-							}
-							if strings.HasPrefix(slice, "FISH") {
-								menuItem.Type = "fish"
-							}
-							if strings.HasPrefix(slice, "STREET") || strings.HasPrefix(slice, "FUSION") {
-								menuItem.Type = "other"
-							}
-
 							nameAndDesc := strings.Split(slice, " | ")
 							for i, part := range nameAndDesc {
 								if i == 0 {
@@ -110,7 +100,24 @@ func StartCrawl(waitGroup *sync.WaitGroup) {
 
 								desc := strings.Join(nameAndDesc, ", ")
 								menuItem.Description = desc
+
+								foodType := utils.GetFoodTypeFromName(menuItem.Name)
+								if foodType == "other" {
+									foodType = utils.GetFoodTypeFromDescription(menuItem.Description)
+								}
+								menuItem.Type = foodType
 							}
+
+							if strings.HasPrefix(slice, "GOOD VEGETARIAN") {
+								menuItem.Type = "vegetarian"
+							}
+							if strings.HasPrefix(slice, "MEAT") {
+								menuItem.Type = "meat"
+							}
+							if strings.HasPrefix(slice, "FISH") {
+								menuItem.Type = "fish"
+							}
+
 						}
 					}
 					menuItem.URL = url

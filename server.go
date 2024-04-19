@@ -10,8 +10,10 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	database "github.com/Jeberlen/lunchtogether/db"
 	"github.com/Jeberlen/lunchtogether/graph"
+	harvestCrawler "github.com/Jeberlen/lunchtogether/harvestcrawler"
 	hiveCrawler "github.com/Jeberlen/lunchtogether/hivecrawler"
 	hojdenCrawler "github.com/Jeberlen/lunchtogether/hojdencrawler"
+
 	"github.com/rs/cors"
 )
 
@@ -27,11 +29,12 @@ func main() {
 	defer database.CloseDB()
 
 	var waitGroup sync.WaitGroup
-	waitGroup.Add(3)
+	waitGroup.Add(4)
 
 	log.Print("starting to crawl")
 	go hojdenCrawler.StartCrawl(&waitGroup)
 	go hiveCrawler.StartCrawl(&waitGroup)
+	go harvestCrawler.StartCrawl(&waitGroup)
 	waitGroup.Wait()
 
 	log.Print("ending crawl")
