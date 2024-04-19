@@ -140,8 +140,34 @@ func StartCrawl(waitGroup *sync.WaitGroup) {
 		restaurant.Date = strconv.Itoa(currentWeek)
 		var menuItems []menu_items.MenuItem
 
-		h.ForEach(".content", func(i int, h *colly.HTMLElement) {
-			log.Print(h.Text)
+		counter := 0
+		shouldStartParsing := false
+
+		h.ForEachWithBreak(".entry-content-wrapper", func(i int, h *colly.HTMLElement) bool {
+			log.Print("counter: " + strconv.Itoa(counter))
+			counter++
+			sectionCounter := 0
+
+			if strings.HasPrefix(h.Text, "Week") {
+				shouldStartParsing = true
+			}
+
+			if !shouldStartParsing {
+				log.Print("STOP LOOP")
+				return false
+			}
+			h.ForEach(".av_textblock_section ", func(i int, h *colly.HTMLElement) {
+				// TODO: Start looping when description stops using bools
+				log.Print("Start")
+				log.Print("section: " + strconv.Itoa(sectionCounter))
+				log.Print(h.Text)
+				sectionCounter++
+				log.Print(shouldStartParsing)
+
+			})
+
+			return true
+
 		})
 
 		var ptrMenuItems []*menu_items.MenuItem
@@ -162,7 +188,7 @@ func StartCrawl(waitGroup *sync.WaitGroup) {
 			log.Print("-------------------------")
 
 		}
-		restaurant.SaveCompleteRestaurant()
+		//restaurant.SaveCompleteRestaurant()
 	})
 
 	collector.OnError(func(_ *colly.Response, err error) {
